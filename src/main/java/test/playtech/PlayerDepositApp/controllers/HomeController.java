@@ -118,15 +118,4 @@ public class HomeController {
 
         return total;
     }
-
-    public boolean isNumeric(String str) {
-        try {
-            @SuppressWarnings("unused")
-            double d = Double.parseDouble(str);
-        } catch(NumberFormatException nfe) {
-            return false;
-        }
-
-        return true;
-    }
 }
