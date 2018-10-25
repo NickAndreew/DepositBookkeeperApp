@@ -1,4 +1,4 @@
-package test.playtech.PlayerDepositApp.repository;
+package test.playtech.PlayerDepositApp.db.repository;
 
 import test.playtech.PlayerDepositApp.instances.DepositEvent;
 import org.springframework.data.jpa.repository.JpaRepository;

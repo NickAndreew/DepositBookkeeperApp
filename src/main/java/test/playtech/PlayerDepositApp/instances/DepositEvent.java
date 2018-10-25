@@ -5,24 +5,33 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table
+@Table(name = "deposits")
 public class DepositEvent {
 
     @Id
-    @Column
+    @Column(name="id")
     @GeneratedValue(strategy=GenerationType.AUTO)
     private int id;
 
-    @Column
+    @Version
+    private long version;
+
+    @Column(name="playerId")
     private long playerId;
 
-    @Column
+    @Column(name="deposit")
     private double deposit;
 
-    @Column
+    @Column(name="timestamp")
     private String timestamp;
 
     public DepositEvent() {
+    }
+
+    public DepositEvent(long playerId, double deposit, String timestamp) {
+        this.playerId = playerId;
+        this.deposit = deposit;
+        this.timestamp = timestamp;
     }
 
     public int getId() {

@@ -5,11 +5,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import test.playtech.PlayerDepositApp.repository.DepositRepository;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import test.playtech.PlayerDepositApp.db.repository.DepositRepository;
 import test.playtech.PlayerDepositApp.services.KafkaProducerService;
 
 @SpringBootApplication
 @EnableAutoConfiguration
+@EnableJpaRepositories
 @ComponentScan("test.playtech")
 public class PlayerDepositAppApplication {
 
