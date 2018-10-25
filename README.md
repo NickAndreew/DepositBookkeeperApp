@@ -16,5 +16,7 @@ You could start working with my application by cloning git repository to your co
 
 I have to make a note that this app is using in-memory H2 database, which stores data to the same folder as the .jar file, or in the root directory of the project, when App is opened in IDE, so don't be surprised when you'll see file with .mv.db extension on your desktop.
 
+While the App is running, feel free to open it on localhost:5656/home
+
 
 Thank you for your attention to my work! 
