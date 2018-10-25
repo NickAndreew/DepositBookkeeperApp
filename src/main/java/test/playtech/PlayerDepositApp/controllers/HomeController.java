@@ -72,25 +72,21 @@ public class HomeController {
     @SendTo("/topic/deposit.event")
     private String getDepositListByPlayerId(@Payload String message){
         long playerId = 0;
-        if(isNumeric(message)) {
-            try {
-                playerId = Long.parseLong(message);
+        try {
+            playerId = Long.parseLong(message);
 
-            } catch (NumberFormatException e) {
-                System.out.println("Error : " + e);
-            }
-
-            DepositsAggregation depositsAggregation = getDepositAggregationPerPlayer(playerId);
-
-            String json = gson.toJson(depositsAggregation);
-            return json;
+        } catch (NumberFormatException e) {
+            System.out.println("Error : " + e);
         }
 
-        return "Player Id in request is not number.. please try again.";
+        DepositsAggregation depositsAggregation = getDepositAggregationPerPlayer(playerId);
+
+        String json = gson.toJson(depositsAggregation);
+
+        return json;
     }
 
     private DepositsAggregation getDepositAggregation(){
-
 
         DepositsAggregation depositsAggregation = new DepositsAggregation();
 
