@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<meta charset="ISO-8859-1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Home</title>
 		<link rel="stylesheet" href="../static/styles.css">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
@@ -12,19 +13,35 @@
 		<script	src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 		<script	src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
 		<script type="text/javascript">
+		
 			var stompClient;
 
-            function makeDeposit(playerId, deposit) {
-                var text = '{"playerId": "'+playerId+'", "deposit": "'+deposit+'", "timestamp": "'+new Date()+'"}';
-                stompClient.send("/request/makeDeposit", {priority: 1}, text);
+            function makeDeposit() {
+				var playerId = document.getElementById("playerIdInput").value;
+				var deposit = document.getElementById("depositAmount").value;
+
+				if(playerId != null && deposit != null && !isNaN(playerId) && !isNaN(deposit)){
+					var text = '{"playerId": "'+playerId+'", "deposit": "'+deposit+'", "timestamp": "'+new Date()+'"}';
+    	            stompClient.send("/request/makeDeposit", {priority: 1}, text);
+				} else {
+					alert("Please make sure you have typed the numeric values to 'Player Id' and 'Deposit Amount', then please try again.");
+				}
+
+				document.getElementById("playerIdInput").value = "";			
+				document.getElementById("depositAmount").value = "";
             }
 
-            function loadDepositsAndTotal(){
+            function requestDepositsAndTotal(){
                 stompClient.send("/request/getDepositsList", {priority: 1});
             }
 
-            function loadDepositsAndTotalForPlayer(playerId){
-                stompClient.send("/request/getDeposits/player", {priority: 1}, playerId);
+            function requestDepositsAndTotalForPlayer(){
+				var playerId = document.getElementById("players-filter").value;
+				if(playerId != null && !isNaN(playerId)){
+					stompClient.send("/request/getDeposits/player", {priority: 1}, playerId);
+				} else {
+					alert("Please make sure you have chosen the Player Id, then please try again.");
+				}
             }
 
 			$(document).ready(function() {
@@ -35,19 +52,75 @@
 					stompClient.subscribe('/topic/deposit.event', function(response) {
                         console.log("Incoming message from topic 'deposit.event' : \n"+response.body);
 						var json = JSON.parse(response.body);
-						console.log("Json.type : \n\n"+json.type);
-						console.log("Json.total : \n\n"+json.total);
-						console.log("Json.depositEvents : \n\n"+json.depositEvents);
-						// if(json.type != null && json.type=="all"){
-						// 	$('#total').text(json.total);
-						// }
+						
+						if(json.type=="all"){
+							console.log("type ALL");
+							$('#total').text(json.total);
+							updateAllDepositsHTML(json);
+
+						} else if (json.type == "player") {
+							console.log("type PLAYER");
+							updateDepositsForPlayerHTML(json);
+
+						} else if (json.type == "new") {
+							console.log("type NEW");
+							$('#total').text(json.total);
+							updateAllDepositsHTML(json);
+
+						}
 
 					});
 
-					loadDepositsAndTotal();
+					requestDepositsAndTotal();
 				});
 
 			});
+
+			function updateAllDepositsHTML(json){
+				var playersList = document.getElementById("players-filter");
+				var allDepositsList = document.getElementById("allDepositsList");
+				playersList.innerHTML = "";
+				allDepositsList.innerHTML = "";
+
+				var players  = [];
+
+				var depositsTotal = document.createElement("h4");
+				depositsTotal.textContent = "Total : "+json.total;
+				allDepositsList.appendChild(depositsTotal);
+
+				for(var i = 0 ; i < json.depositEvents.length ; i++){
+
+					if(!players.includes(json.depositEvents[i].playerId)){
+						console.log("Deposit Event : "+json.depositEvents[i].playerId);
+						var option = document.createElement("option");
+						option.textContent = json.depositEvents[i].playerId;
+						option.setAttribute("value", json.depositEvents[i].playerId);
+						playersList.appendChild(option);
+						players.push(json.depositEvents[i].playerId);
+					}
+					
+					var li = document.createElement("li");
+					li.textContent = "Player Id: "+json.depositEvents[i].playerId + ", Amount: "+json.depositEvents[i].deposit+", Timestamp: "+json.depositEvents[i].timestamp+".";
+					allDepositsList.appendChild(li);
+					
+				}
+			}
+
+			function updateDepositsForPlayerHTML(json){
+				var playerDepositsList = document.getElementById("playerDepositsList");
+				playerDepositsList.innerHTML = "";
+
+				var playerTotal = document.createElement("h4");
+				playerTotal.textContent = "Total : "+json.total;
+				playerDepositsList.appendChild(playerTotal);
+
+				for(var i = 0 ; i < json.depositEvents.length ; i++){
+					var li = document.createElement("li");
+					li.textContent = "Amount: "+json.depositEvents[i].deposit+", Timestamp: "+json.depositEvents[i].timestamp+".";
+					playerDepositsList.appendChild(li);
+				}
+			}
+			
 		</script>
 	</head>
 	<body>
@@ -56,7 +129,7 @@
 				<div class="container-fluid">
 					<div class="navbar-header" style="display: flex; flex-direction: row"> 
 						<!-- <h2 style="text-decoration: none; color: rgb(162, 162, 162);">Playtech</h2> -->
-						<img src="https://www.casinoreviewer.org/wp-content/uploads/2017/04/playtech-550-x-225.jpg" class="logo-img" style="width:30%; height: 100%;"/>
+						<img src="https://www.casinoreviewer.org/wp-content/uploads/2017/04/playtech-550-x-225.jpg" class="logo-img" style="width:30%; height: 80%;"/>
 					</div>
 	
 					<ul class="nav navbar-nav navbar-right">
@@ -74,7 +147,7 @@
 						<div class="columnHeaderDiv">
 							<h3 class="columnHeader">All Deposits</h3>
 						</div>
-						<div class="depositList">
+						<div class="depositList" id="allDepositsList">
 							
 						</div>
 					</div>
@@ -91,20 +164,22 @@
 								</span> 
 								Deposits
 							</h3>
+							<button onclick="requestDepositsAndTotalForPlayer()">Retrieve</button>
 						</div>
-						<div class="depositList">
+						<div class="depositList" id="playerDepositsList">
 							
 						</div>
 					</div>
 				</div>
 				<div class="col-sm-4">
-					<div class="jumbotron" style="height: auto; min-height: 50vh">
+					<div class="jumbotron" style="min-height: 50vh">
 						<div class="columnHeaderDiv">
 							<h3 class="columnHeader">Make Deposit</h3>
-							<!-- <a class="addGlyph"><span class="glyphicon glyphicon-plus" /></a> -->
 						</div>
 						<div class="depositList">
-							
+							<input type="text" placeholder="Player Id" id="playerIdInput"/>
+							<input type="text" placeholder="Deposit Amount" id="depositAmount"/>
+							<button onclick="makeDeposit()" id="submitDeposit">Submit</button>
 						</div>
 					</div>
 				</div>

@@ -107,7 +107,7 @@ public class HomeController {
 
         DepositsAggregation depositsAggregation = new DepositsAggregation();
 
-        depositsAggregation.setType("players");
+        depositsAggregation.setType("player");
         depositsAggregation.setDepositEvents(depositRepository.findByPlayerId(playerId));
         depositsAggregation.setTotal(getTotal(depositRepository.findByPlayerId(playerId)));
 
