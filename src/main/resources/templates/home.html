@@ -3,8 +3,10 @@
 	<head>
 		<meta charset="ISO-8859-1">
 		<title>Home</title>
-		<link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-		<script src="/webjars/jquery/jquery.min.js"></script>
+		<link rel="stylesheet" href="../static/styles.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" crossorigin="anonymous"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 		<script src="/webjars/sockjs-client/sockjs.min.js"></script>
 		<script src="/webjars/stomp-websocket/stomp.min.js"></script>
 		<script	src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
@@ -12,17 +14,17 @@
 		<script type="text/javascript">
 			var stompClient;
 
-            function sendTemperature(playerId, deposit) {
+            function makeDeposit(playerId, deposit) {
                 var text = '{"playerId": "'+playerId+'", "deposit": "'+deposit+'", "timestamp": "'+new Date()+'"}';
                 stompClient.send("/request/makeDeposit", {priority: 1}, text);
             }
 
-            function getAllDeposits(){
+            function loadDepositsAndTotal(){
                 stompClient.send("/request/getDepositsList", {priority: 1});
             }
 
-            function getDepositsOfPlayer(playerId){
-                stompClient.send("/request/getDeposits/"+playerId, {priority: 1});
+            function loadDepositsAndTotalForPlayer(playerId){
+                stompClient.send("/request/getDeposits/player", {priority: 1}, playerId);
             }
 
 			$(document).ready(function() {
@@ -30,11 +32,19 @@
 				var socket = new SockJS('/connection');
 				stompClient = Stomp.over(socket);
 				stompClient.connect({}, function(frame) {
-					stompClient.subscribe('/topic/deposit.event', function(temperature) {
-                        $('#total').text(temperature.body);
-                        
+					stompClient.subscribe('/topic/deposit.event', function(response) {
+                        console.log("Incoming message from topic 'deposit.event' : \n"+response.body);
+						var json = JSON.parse(response.body);
+						console.log("Json.type : \n\n"+json.type);
+						console.log("Json.total : \n\n"+json.total);
+						console.log("Json.depositEvents : \n\n"+json.depositEvents);
+						// if(json.type != null && json.type=="all"){
+						// 	$('#total').text(json.total);
+						// }
 
 					});
+
+					loadDepositsAndTotal();
 				});
 
 			});
@@ -42,45 +52,64 @@
 	</head>
 	<body>
 		<div class="container">
+			<nav class="navbar navbar-inverse" style="background-color: #343a40 !important;">
+				<div class="container-fluid">
+					<div class="navbar-header" style="display: flex; flex-direction: row"> 
+						<!-- <h2 style="text-decoration: none; color: rgb(162, 162, 162);">Playtech</h2> -->
+						<img src="https://www.casinoreviewer.org/wp-content/uploads/2017/04/playtech-550-x-225.jpg" class="logo-img" style="width:30%; height: 100%;"/>
+					</div>
+	
+					<ul class="nav navbar-nav navbar-right">
+						<li style="color:whitesmoke" id="connectionStatus"></li>
+					</ul>
+				</div>
+			</nav>
 			<div class="jumbotron">
 				<h1>Player Deposit Bookeeper App</h1>      
 				<p>Bookkepper Notes</p>
 			</div>
-			     
-		</div>
-        <nav class="navbar navbar-inverse" style="background-color: #343a40 !important;">
-            <div class="container-fluid">
-                <div class="navbar-header" style="display: flex; flex-direction: row"> 
-                    <h2 style="text-decoration: none; color: rgb(162, 162, 162);">Playtech</h2>
-                    <button class="nav-link" style="text-decoration: none; color: rgb(255, 255, 255);">
-                        Deposits
-                    </button>
-                </div>
-
-                <ul class="nav navbar-nav navbar-right">
-                    <li style="color:whitesmoke" id="connectionStatus"></li>
-                </ul>
-            </div>
-        </nav>
-		<div class="alert" role="alert" style="width:300px;margin-left:40%;margin-top:10px;">
-			<p class="text-center">Total : <b id="total">0</b></p>
-		</div>
-		<!-- <div class="model">
-			<div class="modal-dialog" style="width:80%;height:auto">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title">Player Deposit App</h5>
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="jumbotron" style="height: auto; min-height: 50vh">
+						<div class="columnHeaderDiv">
+							<h3 class="columnHeader">All Deposits</h3>
+						</div>
+						<div class="depositList">
+							
+						</div>
 					</div>
-					<div class="model-body">
-						<div class="container" style="width:80%">
-							<canvas id="lineChart"></canvas>
-                            
-                        
-                        </div>
+				</div>
+				<div class="col-sm-4">
+					<div class="jumbotron" style="height: auto; min-height: 50vh">
+						<div class="columnHeaderDiv">
+							<h3 class="columnHeader">
+								Player 
+								<span>
+									<select id="players-filter" class="filterSt"> 
+										<option value="">id</option>
+									</select>
+								</span> 
+								Deposits
+							</h3>
+						</div>
+						<div class="depositList">
+							
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="jumbotron" style="height: auto; min-height: 50vh">
+						<div class="columnHeaderDiv">
+							<h3 class="columnHeader">Make Deposit</h3>
+							<!-- <a class="addGlyph"><span class="glyphicon glyphicon-plus" /></a> -->
+						</div>
+						<div class="depositList">
+							
+						</div>
 					</div>
 				</div>
 			</div>
-		</div> -->
+		</div>
 
 	</body>
 </html>

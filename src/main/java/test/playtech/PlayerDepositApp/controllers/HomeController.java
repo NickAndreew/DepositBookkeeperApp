@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import test.playtech.PlayerDepositApp.instances.DepositEvent;
+import test.playtech.PlayerDepositApp.instances.DepositsAggregation;
 import test.playtech.PlayerDepositApp.repository.DepositRepository;
 
 import java.util.List;
@@ -28,6 +29,8 @@ public class HomeController {
     @Autowired
     DepositRepository depositRepository;
 
+    private Gson gson = new Gson();
+
     @GetMapping("/home")
     public String home(Model model) {
         return "home";
@@ -39,11 +42,19 @@ public class HomeController {
         System.out.println("messageFromClient method, message: "+message);
 
         try {
-            Gson gson = new Gson();
             DepositEvent depositEvent = gson.fromJson(message.toString(), DepositEvent.class);
             depositRepository.save(depositEvent);
 
-            return Double.toString(depositEvent.getDeposit());
+            DepositsAggregation depositsAggregation = new DepositsAggregation();
+
+            depositsAggregation.setType("new");
+            depositsAggregation.setTotal(getTotal(depositRepository.findAll()));
+            depositsAggregation.setDepositEvents(depositRepository.findAll());
+
+            String json = gson.toJson(depositsAggregation);
+
+            return json;
+
         } catch(JsonSyntaxException e) {
             return "JsonSyntaxException.. :( ";
         }
@@ -52,34 +63,61 @@ public class HomeController {
     @MessageMapping("/getDepositsList")
     @SendTo("/topic/deposit.event")
     public String messageGetDeposits() throws Exception {
-        System.out.println("Deposits List Request..");
+        DepositsAggregation depositsAggregation = getDepositAggregation();
 
-        List<DepositEvent> list = depositRepository.findAll();
-
-        return list.toString();
+        String json = gson.toJson(depositsAggregation);
+        return json;
     }
 
-    @RequestMapping(value="/getDeposits/{playerId}")
-    private List<DepositEvent> getDepositListByPlayerId(@PathVariable("playerId") long playerId){
-        List<DepositEvent> list = depositRepository.findByPlayerId(playerId);
+    @MessageMapping("/getDeposits/player")
+    @SendTo("/topic/deposit.event")
+    private String getDepositListByPlayerId(@Payload String message){
+        long playerId = 0;
+        if(isNumeric(message)) {
+            try {
+                playerId = Long.parseLong(message);
 
-        return list;
-    }
+            } catch (NumberFormatException e) {
+                System.out.println("Error : " + e);
+            }
 
-    private double getDepositAggregation(){
-        double total = 0;
+            DepositsAggregation depositsAggregation = getDepositAggregationPerPlayer(playerId);
 
-        for (DepositEvent de : depositRepository.findAll()){
-            total = total + de.getDeposit();
+            String json = gson.toJson(depositsAggregation);
+            return json;
         }
 
-        return total;
+        return "Player Id in request is not number.. please try again.";
     }
 
-    private double getDepositAggregationPerPlayer(long playerId){
+    private DepositsAggregation getDepositAggregation(){
+
+
+        DepositsAggregation depositsAggregation = new DepositsAggregation();
+
+        depositsAggregation.setType("all");
+        depositsAggregation.setTotal(getTotal(depositRepository.findAll()));
+        depositsAggregation.setDepositEvents(depositRepository.findAll());
+
+        return depositsAggregation;
+    }
+
+    private DepositsAggregation getDepositAggregationPerPlayer(long playerId){
+
+
+        DepositsAggregation depositsAggregation = new DepositsAggregation();
+
+        depositsAggregation.setType("players");
+        depositsAggregation.setDepositEvents(depositRepository.findByPlayerId(playerId));
+        depositsAggregation.setTotal(getTotal(depositRepository.findByPlayerId(playerId)));
+
+        return depositsAggregation;
+    }
+
+    public double getTotal(List<DepositEvent> list) {
         double total = 0;
 
-        for(DepositEvent de : depositRepository.findByPlayerId(playerId) ){
+        for (DepositEvent de : list){
             total = total + de.getDeposit();
         }
 
@@ -90,11 +128,10 @@ public class HomeController {
         try {
             @SuppressWarnings("unused")
             double d = Double.parseDouble(str);
-        } catch(NumberFormatException nfe){
+        } catch(NumberFormatException nfe) {
             return false;
         }
 
         return true;
     }
-
 }
