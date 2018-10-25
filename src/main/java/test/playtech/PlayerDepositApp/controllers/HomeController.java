@@ -61,7 +61,7 @@ public class HomeController {
 
     @MessageMapping("/getDepositsList")
     @SendTo("/topic/deposit.event")
-    public String messageGetDeposits() throws Exception {
+    public String getDepositsList() throws Exception {
         DepositsAggregation depositsAggregation = getDepositAggregation();
 
         String json = gson.toJson(depositsAggregation);
@@ -103,8 +103,8 @@ public class HomeController {
         DepositsAggregation depositsAggregation = new DepositsAggregation();
 
         depositsAggregation.setType("player");
-        depositsAggregation.setDepositEvents(depositRepository.findByPlayerId(playerId));
         depositsAggregation.setTotal(getTotal(depositRepository.findByPlayerId(playerId)));
+        depositsAggregation.setDepositEvents(depositRepository.findByPlayerId(playerId));
 
         return depositsAggregation;
     }

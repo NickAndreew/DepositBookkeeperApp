@@ -65,9 +65,10 @@ public class DepositEvent {
     @Override
     public String toString() {
         return "DepositEvent{" +
-                "id='" + id + '\'' +
-                ", playerId='" + playerId + '\'' +
-                ", deposit='" + deposit + '\'' +
+                "id=" + id +
+                ", version=" + version +
+                ", playerId=" + playerId +
+                ", deposit=" + deposit +
                 ", timestamp='" + timestamp + '\'' +
                 '}';
     }
