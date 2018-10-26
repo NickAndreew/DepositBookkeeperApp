@@ -16,7 +16,7 @@ In order to launch this App you would need the following technologies stack inst
 
 You could start working with my application by cloning git repository to your computer(recommended), opening it in IDE and running from there or you could download compiled .jar file (PlayerDepositApp.jar in the root directory) and execute it in Console.
 
-- In both cases you would need to start Zookeeper and Kafka beforehand. Here is a good tutorial on that : https://dzone.com/articles/live-dashboard-using-apache-kafka-and-spring-webso
+- In both cases you would need to start Zookeeper and Kafka beforehand. Here is a good tutorial on that : https://dzone.com/articles/running-apache-kafka-on-windows-os
 - After that is done, normally, you should have 'Zookeeper' server running on 'localhost:2181' and 'Apache Kafka' running on 'localhost: 9092', from that point you can launch DepositBookkeeperApp, in IDE or Console. Default port for the app is set to 'localhost:5656', can be reconfigured in './src/main/resources/application.properties'.
 
 
