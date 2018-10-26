@@ -42,28 +42,24 @@
 						console.log("type NEW");
 						$('#total').text(json.total);
 						updateAllDepositsHTML(json);
-
 					}
-
 				});
 
 				requestDepositsAndTotal();
+			}, function (){
+				console.log("disconnection status handling");
+				// display the error's message header:
+				document.getElementById("connectionStatus").textContent = "Disconnected";
+				document.getElementById("connectionStatus").setAttribute("style", "color: red; padding: 20px;");
 			});
 
-		}, error_callback);
+		});
 
-		function connection_callback(){
+		var connection_callback = function (error) {
 			console.log("connection status handling");
 			// display the error's message header:
-			var connStatus = document.getElementById("connectionStatus").textContent = "Connected";
-			connStatus.setAttribute("style", "color: green;");
-		}
-
-		var error_callback = function (error) {
-			console.log("disconnection status handling");
-			// display the error's message header:
-			var connStatus = document.getElementById("connectionStatus").textContent = "Disconnected";
-			connStatus.setAttribute("style", "color: red;");
+			document.getElementById("connectionStatus").textContent = "Connected";
+			document.getElementById("connectionStatus").setAttribute("style", "color: green; padding: 20px;");
 		};
 
 
@@ -121,7 +117,6 @@
 				var li = document.createElement("li");
 				li.textContent = "Player Id: " + json.depositEvents[i].playerId + ", Amount: " + json.depositEvents[i].deposit + ", Timestamp: " + json.depositEvents[i].timestamp + ".";
 				allDepositsList.appendChild(li);
-
 			}
 		}
 
