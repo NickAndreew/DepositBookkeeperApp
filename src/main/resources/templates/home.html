@@ -23,6 +23,8 @@
 			stompClient = Stomp.over(socket);
 			stompClient.connect({}, function (frame) {
 
+				connection_callback();
+
 				stompClient.subscribe('/topic/deposit.event', function (response) {
 					console.log("Incoming message from topic 'deposit.event' : \n" + response.body);
 					var json = JSON.parse(response.body);
@@ -49,6 +51,13 @@
 			});
 
 		}, error_callback);
+
+		function connection_callback(){
+			console.log("connection status handling");
+			// display the error's message header:
+			var connStatus = document.getElementById("connectionStatus").textContent = "Connected";
+			connStatus.setAttribute("style", "color: green;");
+		}
 
 		var error_callback = function (error) {
 			console.log("disconnection status handling");
