@@ -5,14 +5,11 @@
 	<meta charset="ISO-8859-1">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Home</title>
-	<link rel="stylesheet" href="../static/styles.css">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" crossorigin="anonymous"></script>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
 	<script src="/webjars/sockjs-client/sockjs.min.js"></script>
 	<script src="/webjars/stomp-websocket/stomp.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
 	<script type="text/javascript">
 
 		var stompClient;
@@ -26,20 +23,19 @@
 				connection_callback();
 
 				stompClient.subscribe('/topic/deposit.event', function (response) {
-					console.log("Incoming message from topic 'deposit.event' : \n" + response.body);
 					var json = JSON.parse(response.body);
 
 					if (json.type == "all") {
-						console.log("type ALL");
+						console.log("Message type: ALL");
 						$('#total').text(json.total);
 						updateAllDepositsHTML(json);
 
 					} else if (json.type == "player") {
-						console.log("type PLAYER");
+						console.log("Message type: PLAYER");
 						updateDepositsForPlayerHTML(json);
 
 					} else if (json.type == "new") {
-						console.log("type NEW");
+						console.log("Message type: NEW");
 						$('#total').text(json.total);
 						updateAllDepositsHTML(json);
 					}
@@ -47,7 +43,6 @@
 
 				requestDepositsAndTotal();
 			}, function (){
-				console.log("disconnection status handling");
 				// display the error's message header:
 				document.getElementById("connectionStatus").textContent = "Disconnected";
 				document.getElementById("connectionStatus").setAttribute("style", "color: red; padding: 20px;");
@@ -56,8 +51,6 @@
 		});
 
 		var connection_callback = function (error) {
-			console.log("connection status handling");
-			// display the error's message header:
 			document.getElementById("connectionStatus").textContent = "Connected";
 			document.getElementById("connectionStatus").setAttribute("style", "color: green; padding: 20px;");
 		};
@@ -67,8 +60,10 @@
 			var playerId = document.getElementById("playerIdInput").value;
 			var deposit = document.getElementById("depositAmount").value;
 
-			if (playerId != null && deposit != null && !isNaN(playerId) && !isNaN(deposit)) {
-				var text = '{"playerId": "' + playerId + '", "deposit": "' + deposit + '", "timestamp": "' + new Date() + '"}';
+			if (playerId != null && deposit != null && !isNaN(playerId) && !isNaN(deposit) && playerId != '' && deposit != '') {
+				var d = new Date();
+				
+				var text = '{"playerId": "' + playerId + '", "deposit": "' + deposit + '", "timestamp": "'+d.getHours()+':'+d.getMinutes()+', '+d.getDate()+'/'+d.getMonth()+'/'+d.getFullYear()+'"}';
 				stompClient.send("/request/makeDeposit", { priority: 1 }, text);
 			} else {
 				alert("Please make sure you have typed the numeric values to 'Player Id' and 'Deposit Amount', then please try again.");
@@ -94,19 +89,42 @@
 		function updateAllDepositsHTML(json) {
 			var playersList = document.getElementById("players-filter");
 			var allDepositsList = document.getElementById("allDepositsList");
+			var allDepositsListHeader = document.getElementById("allDepositsListHeader");
+			var total = document.getElementById('total');
 			playersList.innerHTML = "";
 			allDepositsList.innerHTML = "";
+			allDepositsListHeader.innerHTML = "";
+			total.innerHTML = "";
 
 			var players = [];
+			var deposits = [];
 
 			var depositsTotal = document.createElement("h4");
 			depositsTotal.textContent = "Total : " + json.total;
-			allDepositsList.appendChild(depositsTotal);
+			total.appendChild(depositsTotal);
+
+			var trHead = document.createElement("tr");
+
+			var th = document.createElement('th');
+			th.style = "min-width:65px;";
+			var th1 = document.createElement('th');
+			th1.style = "min-width:70px;";
+			var th2 = document.createElement('th');
+			th2.style = "min-width:70px;";
+
+			th.innerText = "Player";
+			th1.innerText = "Deposit";
+			th2.innerText = "Timestamp";
+
+			trHead.appendChild(th);
+			trHead.appendChild(th1);
+			trHead.appendChild(th2);
+
+			allDepositsListHeader.appendChild(trHead);
 
 			for (var i = 0; i < json.depositEvents.length; i++) {
 
 				if (!players.includes(json.depositEvents[i].playerId)) {
-					console.log("Deposit Event : " + json.depositEvents[i].playerId);
 					var option = document.createElement("option");
 					option.textContent = json.depositEvents[i].playerId;
 					option.setAttribute("value", json.depositEvents[i].playerId);
@@ -114,28 +132,70 @@
 					players.push(json.depositEvents[i].playerId);
 				}
 
-				var li = document.createElement("li");
-				li.textContent = "Player Id: " + json.depositEvents[i].playerId + ", Amount: " + json.depositEvents[i].deposit + ", Timestamp: " + json.depositEvents[i].timestamp + ".";
-				allDepositsList.appendChild(li);
+				var tr = document.createElement("tr");
+				var td = document.createElement("td");
+				var td1 = document.createElement("td");
+				var td2 = document.createElement("td");
+
+				td.textContent = json.depositEvents[i].playerId;
+				td1.textContent = json.depositEvents[i].deposit;
+				td2.textContent = json.depositEvents[i].timestamp;
+
+				tr.appendChild(td);
+				tr.appendChild(td1);
+				tr.appendChild(td2);
+
+				allDepositsList.appendChild(tr);
 			}
 		}
 
 		function updateDepositsForPlayerHTML(json) {
+			var thead = document.getElementById('playerDepositsListHeader');
+			thead.innerHTML = "";
+
+			var totalPerPlayer = document.getElementById('totalPerPlayer');
+			totalPerPlayer.innerHTML = "";
+
+			var th1 = document.createElement("th");
+			var th2 = document.createElement("th");
+
+			th1.textContent = "Deposit";
+			th1.style = "min-width:70px";
+
+			th2.textContent = "Timestamp";
+			th2.style = "min-width:70px";
+
+			thead.appendChild(th1);
+			thead.appendChild(th2);
+
 			var playerDepositsList = document.getElementById("playerDepositsList");
 			playerDepositsList.innerHTML = "";
 
 			var playerTotal = document.createElement("h4");
 			playerTotal.textContent = "Total : " + json.total;
-			playerDepositsList.appendChild(playerTotal);
+			totalPerPlayer.appendChild(playerTotal);
 
 			for (var i = 0; i < json.depositEvents.length; i++) {
-				var li = document.createElement("li");
-				li.textContent = "Amount: " + json.depositEvents[i].deposit + ", Timestamp: " + json.depositEvents[i].timestamp + ".";
-				playerDepositsList.appendChild(li);
+				var tr = document.createElement("tr");
+				var td = document.createElement("td");
+				var td1 = document.createElement("td");
+
+				td.textContent = json.depositEvents[i].deposit;
+				td1.textContent = json.depositEvents[i].timestamp;
+				tr.appendChild(td);
+				tr.appendChild(td1);
+				playerDepositsList.appendChild(tr);
 			}
 		}
 
 	</script>
+	<style>
+		.jumbotron {
+			padding-top: 20px !important;
+			padding-right: 20px !important;
+    		padding-left: 30px !important;
+		}
+	</style>
 </head>
 
 <body>
@@ -154,7 +214,7 @@
 			</div>
 		</nav>
 		<div class="jumbotron">
-			<h1>Player Deposit Bookeeper App</h1>
+			<h1>Player Deposit Bookkeeper App</h1>
 			<p>Bookkepper Notes</p>
 		</div>
 		<div class="row">
@@ -162,9 +222,19 @@
 				<div class="jumbotron" style="min-height: 50vh; max-height: 50vh;">
 					<div class="columnHeaderDiv">
 						<h3 class="columnHeader">All Deposits</h3>
-					</div>
-					<div class="depositList" id="allDepositsList" style="overflow-y:auto; max-height: 35vh;">
+						<div id="total">
 
+						</div>
+					</div>
+					<div style="overflow-y:auto; max-height: 26vh;  min-width: 37vh;">
+						<table> 
+							<thead id="allDepositsListHeader">
+
+							</thead>
+							<tbody class="depositList" id="allDepositsList">
+							
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>
@@ -180,12 +250,22 @@
 							</span>
 							Deposits
 						</h3>
+						<div id="totalPerPlayer">
+
+						</div>
 						<button onclick="requestDepositsAndTotalForPlayer()">Retreive</button>
 					</div>
-					<div class="depositList" id="playerDepositsList" style="overflow-y:auto; max-height:30vh; margin-top: 15px;">
+					<div style="overflow-y:auto; max-height:21vh;">
+						<table>
+							<thead id="playerDepositsListHeader">
 
+							</thead>
+							<tbody class="depositList" id="playerDepositsList" style="margin-top: 15px; min-width: 30vh;">
+
+							</tbody>
+						</table>
 					</div>
-				</div>
+				</div>	
 			</div>
 			<div class="col-sm-4">
 				<div class="jumbotron" style="min-height: 50vh; max-height: 50vh;">
